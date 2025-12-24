@@ -5,9 +5,9 @@
 import os
 import time
 import typing
-import torch
+# import torch
 import bittensor as bt
-from transformers import AutoTokenizer, AutoModelForCausalLM
+# from transformers import AutoTokenizer, AutoModelForCausalLM
 
 # Add the parent directory to path so we can import template
 import sys
@@ -45,7 +45,7 @@ class Miner(BaseMinerNeuron):
         bt.logging.info("Initializing Long Context Miner...")
         
         # Initialize device
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         bt.logging.info(f"Using device: {self.device}")
         
         # Get model name from config or use default
