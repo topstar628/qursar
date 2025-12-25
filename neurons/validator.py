@@ -177,25 +177,36 @@ class Validator(BaseValidatorNeuron):
                 # 2. Context Bucket logic
                 bucket_name = self.get_bucket(task.context_length)
                 bt.logging.info(f"📋 Task: {task.task_id} [{bucket_name}] | Len: {task.context_length}")
+                
+                bt.logging.info(f"🧩 Difficulty Level: {self.difficulty_level}")
+                bt.logging.info(f"Exact Answer: {task.expected_output[:100]}...")
 
                 # 3. Query
                 miner_uids = self.get_random_miners(self.config.neuron.sample_size)
+                bt.logging.info(f"🔖 Sampled Miner Uids: {miner_uids}")
                 synapse = template.protocol.BenchmarkEvaluationSynapse(
                     task_id=task.task_id,
                     task_type=task.task_type,
                     dataset_name=task.dataset_name,
                     context=task.context,
                     prompt=task.prompt,
-                    difficulty_level=task.difficulty_level
+                    difficulty_level=task.difficulty_level,
+                    evaluation_metrics=[]
                 )
                 
+                axons = [self.metagraph.axons[uid] for uid in miner_uids]
+                bt.logging.info(f"Sending to axons: {axons}")
+                
                 responses = await self.dendrite(
-                    axons=[self.metagraph.axons[uid] for uid in miner_uids],
+                    axons=axons,
                     synapse=synapse,
                     deserialize=True,
                     timeout=max(10, task.context_length / 200) # Robust timeout
                 )
-
+                
+                for response in responses:
+                    bt.logging.info(f"‼️ Miner {response.dendrite.hotkey[:6]} Response: {response}")
+                
                 # 4. Scoring
                 rewards = self.score_responses(task, responses, miner_uids)
                 
@@ -243,24 +254,60 @@ class Validator(BaseValidatorNeuron):
         raw_scores = []
         raw_accuracies = []  # Track raw accuracy before multipliers
         
-        bt.logging.debug(f"💬 len: {len(responses)}")
-        bt.logging.debug(f"💬 content: {responses}")
         for uid, response in zip(miner_uids, responses):
-            if not response or not response.response:
+            # Safely extract response text from possible types (object with .response, dict, raw str, etc.)
+            resp_text = None
+            if response is None:
+                resp_text = None
+            elif isinstance(response, dict):
+                # Common keys that may contain the payload
+                resp_text = (
+                    response.get("response")
+                    or response.get("data")
+                    or response.get("result")
+                    or response.get("body")
+                )
+            elif hasattr(response, "response"):
+                try:
+                    resp_text = getattr(response, "response")
+                except Exception:
+                    resp_text = None
+            elif isinstance(response, (str, bytes)):
+                resp_text = response
+            else:
+                # Fallback: try .numpy() or str()
+                if hasattr(response, "numpy"):
+                    try:
+                        resp_text = response.numpy()
+                    except Exception:
+                        resp_text = None
+                else:
+                    try:
+                        resp_text = str(response)
+                    except Exception:
+                        resp_text = None
+
+            if not resp_text:
                 # Penalty Logic: No Response
                 self.consecutive_failures[uid] += 1
-                failure_penalty = PENALTY_NO_RESPONSE - (0.1 * self.consecutive_failures[uid]) # Escalating penalty
+                # Ensure value used in arithmetic is a float
+                cf_val = (
+                    float(self.consecutive_failures[uid].item())
+                    if hasattr(self.consecutive_failures[uid], "item")
+                    else float(self.consecutive_failures[uid])
+                )
+                failure_penalty = PENALTY_NO_RESPONSE - (0.1 * cf_val)  # Escalating penalty
                 raw_scores.append(failure_penalty)
                 continue
-            
+
             # Reset failures if successful response
             self.consecutive_failures[uid] = 0
-            
+
             try:
                 if task.all_classes:
-                    score = metric_fn(response.response, task.expected_output, all_classes=task.all_classes)
+                    score = metric_fn(resp_text, task.expected_output, all_classes=task.all_classes)
                 else:
-                    score = metric_fn(response.response, task.expected_output)
+                    score = metric_fn(resp_text, task.expected_output)
                 
                 # Track raw accuracy
                 raw_accuracies.append(score)

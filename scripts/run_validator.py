@@ -7,7 +7,7 @@ The validator evaluates miners using real-world benchmarks and diversity trackin
 
 Usage:
     python scripts/run_validator.py --netuid 1 --subtensor.network finney --wallet.name my_wallet --wallet.hotkey my_hotkey
-    python scripts/run_validator.py --netuid 1 --subtensor.network test --wallet.name test_wallet --wallet.hotkey test_hotkey --benchmarks.enabled
+    python scripts/run_validator.py --netuid 1 --subtensor.network test --wallet.name test --wallet.hotkey validator-1 --benchmarks.enabled
     python scripts/run_validator.py --help  # Show all options
 """
 
@@ -20,7 +20,7 @@ subnet_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, subnet_dir)
 
 import bittensor as bt
-from neurons.validator import HFAValidator
+from neurons.validator import Validator
 
 
 def get_config():
@@ -88,7 +88,7 @@ def main():
     
     try:
         # Create and run validator
-        validator = HFAValidator(config=config)
+        validator = Validator(config=config)
         
         bt.logging.info("🔍 Starting validator with comprehensive evaluation")
         bt.logging.info(f"📡 Network: {config.subtensor.network}")

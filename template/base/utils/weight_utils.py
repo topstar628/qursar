@@ -159,9 +159,31 @@ def process_weights_for_netuid(
     if metagraph is None:
         metagraph = subtensor.metagraph(netuid)
 
-    # Cast weights to floats.
-    if not isinstance(weights, np.ndarray) or weights.dtype != np.float32:
-        weights = weights.astype(np.float32)
+    # Cast weights to numpy float32 array (support torch/tf/bittensor tensors).
+    try:
+        import torch
+    except Exception:
+        torch = None
+
+    # Convert common tensor types to numpy arrays.
+    if isinstance(weights, np.ndarray):
+        arr = weights
+    elif torch is not None and isinstance(weights, torch.Tensor):
+        arr = weights.detach().cpu().numpy()
+    elif hasattr(weights, "numpy"):
+        # covers tensorflow EagerTensors and other tensor-like objects
+        try:
+            arr = weights.numpy()
+        except Exception:
+            arr = np.asarray(weights)
+    else:
+        arr = np.asarray(weights)
+
+    # Ensure dtype float32.
+    if arr.dtype != np.float32:
+        arr = arr.astype(np.float32)
+
+    weights = arr
 
     # Network configuration parameters from an subtensor.
     # These parameters determine the range of acceptable weights for each neuron.

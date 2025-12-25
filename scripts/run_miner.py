@@ -20,7 +20,7 @@ subnet_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, subnet_dir)
 
 import bittensor as bt
-from neurons.miner import HFAMiner
+from neurons.miner import Miner
 
 
 def get_config():
@@ -78,7 +78,7 @@ def main():
     
     try:
         # Create and run miner
-        miner = HFAMiner(config=config)
+        miner = Miner(config=config)
         
         bt.logging.info(f"🚀 Starting miner with {config.model.architecture} architecture")
         bt.logging.info(f"📡 Network: {config.subtensor.network}")
