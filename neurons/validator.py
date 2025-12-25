@@ -190,8 +190,11 @@ class Validator(BaseValidatorNeuron):
                     difficulty_level=task.difficulty_level
                 )
                 
+                axons = [self.metagraph.axons[uid] for uid in miner_uids]
+                bt.logging.debug(f"Sending to axons: {axons}")
+                
                 responses = await self.dendrite(
-                    axons=[self.metagraph.axons[uid] for uid in miner_uids],
+                    axons=axons,
                     synapse=synapse,
                     deserialize=True,
                     timeout=max(10, task.context_length / 200) # Robust timeout
