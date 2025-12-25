@@ -187,8 +187,8 @@ class Validator(BaseValidatorNeuron):
                     dataset_name=task.dataset_name,
                     context=task.context,
                     prompt=task.prompt,
-                    difficulty_level=task.difficulty_level
-                    evaluation_metrics=[]s
+                    difficulty_level=task.difficulty_level,
+                    evaluation_metrics=[]
                 )
                 
                 axons = [self.metagraph.axons[uid] for uid in miner_uids]
