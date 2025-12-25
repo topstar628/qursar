@@ -245,21 +245,59 @@ class Validator(BaseValidatorNeuron):
         raw_accuracies = []  # Track raw accuracy before multipliers
         
         for uid, response in zip(miner_uids, responses):
-            if not response or not response.response:
+            # Safely extract response text from possible types (object with .response, dict, raw str, etc.)
+            resp_text = None
+            if response is None:
+                resp_text = None
+            elif isinstance(response, dict):
+                # Common keys that may contain the payload
+                resp_text = (
+                    response.get("response")
+                    or response.get("data")
+                    or response.get("result")
+                    or response.get("body")
+                )
+            elif hasattr(response, "response"):
+                try:
+                    resp_text = getattr(response, "response")
+                except Exception:
+                    resp_text = None
+            elif isinstance(response, (str, bytes)):
+                resp_text = response
+            else:
+                # Fallback: try .numpy() or str()
+                if hasattr(response, "numpy"):
+                    try:
+                        resp_text = response.numpy()
+                    except Exception:
+                        resp_text = None
+                else:
+                    try:
+                        resp_text = str(response)
+                    except Exception:
+                        resp_text = None
+
+            if not resp_text:
                 # Penalty Logic: No Response
                 self.consecutive_failures[uid] += 1
-                failure_penalty = PENALTY_NO_RESPONSE - (0.1 * self.consecutive_failures[uid]) # Escalating penalty
+                # Ensure value used in arithmetic is a float
+                cf_val = (
+                    float(self.consecutive_failures[uid].item())
+                    if hasattr(self.consecutive_failures[uid], "item")
+                    else float(self.consecutive_failures[uid])
+                )
+                failure_penalty = PENALTY_NO_RESPONSE - (0.1 * cf_val)  # Escalating penalty
                 raw_scores.append(failure_penalty)
                 continue
-            
+
             # Reset failures if successful response
             self.consecutive_failures[uid] = 0
-            
+
             try:
                 if task.all_classes:
-                    score = metric_fn(response.response, task.expected_output, all_classes=task.all_classes)
+                    score = metric_fn(resp_text, task.expected_output, all_classes=task.all_classes)
                 else:
-                    score = metric_fn(response.response, task.expected_output)
+                    score = metric_fn(resp_text, task.expected_output)
                 
                 # Track raw accuracy
                 raw_accuracies.append(score)
