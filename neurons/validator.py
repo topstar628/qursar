@@ -180,6 +180,7 @@ class Validator(BaseValidatorNeuron):
 
                 # 3. Query
                 miner_uids = self.get_random_miners(self.config.neuron.sample_size)
+                bt.logging.info(f"🔖 Sampled Miner Uids: {miner_uids}")
                 synapse = template.protocol.BenchmarkEvaluationSynapse(
                     task_id=task.task_id,
                     task_type=task.task_type,
@@ -195,7 +196,7 @@ class Validator(BaseValidatorNeuron):
                     deserialize=True,
                     timeout=max(10, task.context_length / 200) # Robust timeout
                 )
-
+                
                 # 4. Scoring
                 rewards = self.score_responses(task, responses, miner_uids)
                 
@@ -243,8 +244,6 @@ class Validator(BaseValidatorNeuron):
         raw_scores = []
         raw_accuracies = []  # Track raw accuracy before multipliers
         
-        bt.logging.debug(f"💬 len: {len(responses)}")
-        bt.logging.debug(f"💬 content: {responses}")
         for uid, response in zip(miner_uids, responses):
             if not response or not response.response:
                 # Penalty Logic: No Response
