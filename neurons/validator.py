@@ -204,8 +204,8 @@ class Validator(BaseValidatorNeuron):
                     timeout=max(10, task.context_length / 200) # Robust timeout
                 )
                 
-                for response in responses:
-                    bt.logging.info(f"‼️ Miner {response.dendrite.hotkey[:6]} Response: {response}")
+                for uid, response in zip(miner_uids, responses):
+                    bt.logging.info(f"‼️ Miner {uid} Response: {response}")
                 
                 # 4. Scoring
                 rewards = self.score_responses(task, responses, miner_uids)
