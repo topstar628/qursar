@@ -4,7 +4,7 @@ module.exports = {
       name: 'qursar_testnet_miner', // Name of the application
       script: 'neurons/miner_test.py', // Path to your script
       interpreter: 'python', // Use the Python interpreter
-      args: '--netuid 439 --subtensor.network test --wallet.name test --wallet.hotkey miner-1 --logging.debug', // Arguments to pass
+      args: '--netuid 439 --subtensor.network test --subtensor.chain_endpoint wss://test.finney.opentensor.ai:443 --wallet.name test --wallet.hotkey miner-1 --logging.debug', // Arguments to pass
       instances: 1, // Number of instances to run
       exec_mode: 'fork', // Can be 'fork' or 'cluster'
       env: {
