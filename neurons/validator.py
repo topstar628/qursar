@@ -177,6 +177,9 @@ class Validator(BaseValidatorNeuron):
                 # 2. Context Bucket logic
                 bucket_name = self.get_bucket(task.context_length)
                 bt.logging.info(f"📋 Task: {task.task_id} [{bucket_name}] | Len: {task.context_length}")
+                
+                bt.logging.info(f"🧩 Difficulty Level: {self.difficulty_level}")
+                bt.logging.info(f"Exact Answer: {task.expected_output[:100]}...")
 
                 # 3. Query
                 miner_uids = self.get_random_miners(self.config.neuron.sample_size)
@@ -192,7 +195,7 @@ class Validator(BaseValidatorNeuron):
                 )
                 
                 axons = [self.metagraph.axons[uid] for uid in miner_uids]
-                bt.logging.debug(f"Sending to axons: {axons}")
+                bt.logging.info(f"Sending to axons: {axons}")
                 
                 responses = await self.dendrite(
                     axons=axons,
@@ -201,9 +204,8 @@ class Validator(BaseValidatorNeuron):
                     timeout=max(10, task.context_length / 200) # Robust timeout
                 )
                 
-                bt.logging.debug('|' * 40)
-                bt.logging.debug(f"Received responses: {responses}")
-                bt.logging.debug('|' * 40)
+                for response in responses:
+                    bt.logging.info(f"‼️ Miner {response.dendrite.hotkey[:6]} Response: {response}")
                 
                 # 4. Scoring
                 rewards = self.score_responses(task, responses, miner_uids)
