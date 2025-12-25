@@ -7,7 +7,7 @@ The miner can run HFA, SimpleMind, or hybrid models based on configuration.
 
 Usage:
     python scripts/run_miner.py --netuid 1 --subtensor.network finney --wallet.name my_wallet --wallet.hotkey my_hotkey
-    python scripts/run_miner.py --netuid 1 --subtensor.network test --wallet.name test_wallet --wallet.hotkey test_hotkey --model.architecture simplemind
+    python scripts/run_miner.py --netuid 439 --subtensor.network test --wallet.name test --wallet.hotkey miner-1 --model.architecture simplemind --logging.info
     python scripts/run_miner.py --help  # Show all options
 """
 
@@ -20,7 +20,7 @@ subnet_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, subnet_dir)
 
 import bittensor as bt
-from neurons.miner import Miner
+from neurons.miner_test import Miner
 
 
 def get_config():
