@@ -201,6 +201,10 @@ class Validator(BaseValidatorNeuron):
                     timeout=max(10, task.context_length / 200) # Robust timeout
                 )
                 
+                bt.logging.debug('|' * 40)
+                bt.logging.debug(f"Received responses: {responses}")
+                bt.logging.debug('|' * 40)
+                
                 # 4. Scoring
                 rewards = self.score_responses(task, responses, miner_uids)
                 
