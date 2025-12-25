@@ -243,6 +243,8 @@ class Validator(BaseValidatorNeuron):
         raw_scores = []
         raw_accuracies = []  # Track raw accuracy before multipliers
         
+        bt.logging.debug(f"💬 len: {len(responses)}")
+        bt.logging.debug(f"💬 content: {responses}")
         for uid, response in zip(miner_uids, responses):
             if not response or not response.response:
                 # Penalty Logic: No Response
